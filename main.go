@@ -102,40 +102,35 @@ func NewSystem(confFile string) (* System, error) {
         return nil, err
     }
     s := &System{Lines:[]*Line{}}
-    for i := 1; true; i++ {
-        k := fmt.Sprintf("line%d", i)
-        e, ok := conf.Get(k)
-        if !ok {
-            break
-        }
+    for index, e := range conf.Get("line") {
         if len(e.Tokens) != 2 {
             s.Shutdown()
-            return nil, fmt.Errorf("%s: Bad Line config at %d", e.Lineno)
+            return nil, fmt.Errorf("%s: Bad Line config at %d", confFile, e.Lineno)
         }
         if *verbose {
             log.Printf("New line: %s on %s", e.Tokens[0], e.Tokens[1])
         }
-        line, err := NewLine(i, e.Tokens[0], e.Tokens[1])
+        line, err := NewLine(index, e.Tokens[0], e.Tokens[1])
         if err != nil {
             s.Shutdown()
             return nil, err
         }
         s.Lines = append(s.Lines, line)
     }
-    if e, ok := conf.Get("start"); !ok {
+    if e := conf.Get("start"); len(e) != 1 {
         s.start = parseTime("11:00PM")
     } else {
-        s.start = parseTime(e.Tokens[0])
+        s.start = parseTime(e[0].Tokens[0])
     }
-    if e, ok := conf.Get("duration"); !ok {
+    if e := conf.Get("duration"); len(e) != 1 {
         s.duration = parseDuration("20m")
     } else {
-        s.duration = parseDuration(e.Tokens[0])
+        s.duration = parseDuration(e[0].Tokens[0])
     }
-    if e, ok := conf.Get("gap"); !ok {
+    if e := conf.Get("gap"); len(e) != 1 {
         s.gap = parseDuration("2m")
     } else {
-        s.gap = parseDuration(e.Tokens[0])
+        s.gap = parseDuration(e[0].Tokens[0])
     }
     if *verbose {
         log.Printf("Start: %s, duration %s, gap %s", s.start.String(), s.duration.String(), s.gap.String())
